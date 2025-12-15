@@ -6,6 +6,7 @@ import '../../app/theme/cozy_theme.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../shared/providers/global_providers.dart';
 import '../../shared/services/mistake_service.dart';
+import '../../shared/services/lesson_service.dart'; // import lesson service
 import '../mode_detection/models/learning_mode.dart';
 
 // Local state for the session settings
@@ -20,16 +21,9 @@ final sessionWordSpacingProvider = StateProvider.autoDispose<double>(
 // ... (providers remain)
 
 class LearningSessionPage extends ConsumerStatefulWidget {
-  final String? lessonId;
-  final String? title;
-  final String? content;
+  final String lessonId; // Still string from router, parse later
 
-  const LearningSessionPage({
-    super.key,
-    this.lessonId,
-    this.title,
-    this.content,
-  });
+  const LearningSessionPage({super.key, required this.lessonId});
 
   @override
   ConsumerState<LearningSessionPage> createState() =>
@@ -43,11 +37,6 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
 
   bool _isPlaying = false;
 
-  // Content State
-  late String _sessionTitle;
-  late String _sessionContent;
-  bool _isLoading = true;
-
   // Tracking
   int _pauseCount = 0;
   DateTime? _lastScrollTime;
@@ -56,46 +45,14 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
   bool _isQuizMode = false;
   int _currentQuestionIndex = 0;
   int _score = 0;
-  List<Map<String, dynamic>> _questions = [];
 
   @override
   void initState() {
     super.initState();
-
-    // Initialize content
-    if (widget.title != null && widget.content != null) {
-      _sessionTitle = widget.title!;
-      _sessionContent = widget.content!;
-      _isLoading = false;
-    } else {
-      // Fallback: If no extra, load mock data or fetch by ID (Mock for now)
-      _sessionTitle = "The Solar System (Fallback)";
-      _sessionContent =
-          "The Solar System is our home in the galaxy..."; // Truncated for brevity
-      _isLoading = false;
-    }
-
     _sessionTimer.start();
     _lastScrollTime = DateTime.now();
     _scrollController.addListener(_onScroll);
-
     _initTts();
-
-    // Parse questions if available (mock for now)
-    _questions = [
-      {
-        'question': 'What is the largest planet?',
-        'options': ['Earth', 'Mars', 'Jupiter', 'Venus'],
-        'correctIndex': 2,
-        'explanation': 'Jupiter is the largest planet in our solar system.',
-      },
-      {
-        'question': 'Which planet has rings?',
-        'options': ['Mercury', 'Saturn', 'Mars', 'Earth'],
-        'correctIndex': 1,
-        'explanation': 'Saturn is famous for its beautiful rings.',
-      },
-    ];
 
     // Initial setup based on global mode
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -112,13 +69,11 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
         ref.read(sessionWordSpacingProvider.notifier).state = 2.0;
         break;
       case LearningMode.dyslexia:
-        // Dyslexia often benefits from larger spacing and sans-serif (already used)
         ref.read(sessionFontSizeProvider.notifier).state = 22.0;
         ref.read(sessionSpacingProvider.notifier).state = 1.8;
         ref.read(sessionWordSpacingProvider.notifier).state = 1.5;
         break;
       case LearningMode.normal:
-        // Defaults
         break;
     }
   }
@@ -127,7 +82,6 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     final now = DateTime.now();
     final difference = now.difference(_lastScrollTime!).inSeconds;
 
-    // Detect pauses (simple heuristic)
     if (difference > 5) {
       _pauseCount++;
       _adaptToPauses();
@@ -136,7 +90,6 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
   }
 
   void _adaptToPauses() {
-    // If pausing frequently, increase spacing helpful for focus
     if (_pauseCount > 3) {
       final currentSpacing = ref.read(sessionSpacingProvider);
       if (currentSpacing < 2.5) {
@@ -149,59 +102,19 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
             backgroundColor: CozyColors.primary,
           ),
         );
-        _pauseCount = 0; // Reset after adaptation
+        _pauseCount = 0;
       }
     }
   }
 
   void _initTts() async {
     await _flutterTts.setLanguage("en-US");
-    await _flutterTts.setSpeechRate(0.5); // Slower for learning
+    await _flutterTts.setSpeechRate(0.5);
     await _flutterTts.setPitch(1.0);
 
     _flutterTts.setCompletionHandler(() {
       if (mounted) setState(() => _isPlaying = false);
     });
-  }
-
-  void _toggleAudio() async {
-    if (_isPlaying) {
-      await _flutterTts.stop();
-      if (mounted) setState(() => _isPlaying = false);
-    } else {
-      if (mounted) setState(() => _isPlaying = true);
-      await _flutterTts.speak(_sessionContent);
-    }
-  }
-
-  void _submitAnswer(int selectedIndex) {
-    final currentQ = _questions[_currentQuestionIndex];
-    final correctIndex = currentQ['correctIndex'] as int;
-
-    if (selectedIndex == correctIndex) {
-      _score++;
-      _showFeedback(true, currentQ['explanation']);
-    } else {
-      _showFeedback(false, currentQ['explanation']);
-      // Log mistake
-      ref
-          .read(mistakeServiceProvider)
-          .logMistake(
-            lessonId: 1, // Simulated ID
-            question: currentQ['question'],
-            userAnswer: currentQ['options'][selectedIndex],
-            correctAnswer: currentQ['options'][correctIndex],
-          );
-    }
-
-    if (_currentQuestionIndex < _questions.length - 1) {
-      setState(() {
-        _currentQuestionIndex++;
-      });
-    } else {
-      // Quiz Finished
-      _showCompletionDialog();
-    }
   }
 
   void _showFeedback(bool isCorrect, String explanation) {
@@ -224,27 +137,7 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     );
   }
 
-  void _showCompletionDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text("Lesson Complete!"),
-        content: Text("You scored $_score/${_questions.length}"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Close page
-            },
-            child: const Text("Finish"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ... (existing tracking methods)
+  // Need to extract questions from the fetches lesson.
 
   @override
   void dispose() {
@@ -256,15 +149,22 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Read dynamic settings
     final fontSize = ref.watch(sessionFontSizeProvider);
     final height = ref.watch(sessionSpacingProvider);
     final wordSpacing = ref.watch(sessionWordSpacingProvider);
 
+    final lessonIdInt =
+        int.tryParse(widget.lessonId) ?? 1; // Default to 1 if fail
+    final lessonAsync = ref.watch(lessonDetailsProvider(lessonIdInt));
+
     return Scaffold(
-      backgroundColor: CozyColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(_sessionTitle),
+        title: lessonAsync.when(
+          data: (lesson) => Text(lesson?.title ?? "Lesson"),
+          error: (_, __) => const Text("Error"),
+          loading: () => const Text("Loading..."),
+        ),
         actions: [
           if (!_isQuizMode) ...[
             IconButton(
@@ -274,7 +174,11 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
                     : Icons.volume_up_rounded,
               ),
               color: _isPlaying ? CozyColors.primary : CozyColors.textMain,
-              onPressed: _toggleAudio,
+              onPressed: () {
+                lessonAsync.whenData((lesson) {
+                  if (lesson != null) _toggleAudio(lesson.content);
+                });
+              },
             ),
             IconButton(
               icon: const Icon(Icons.text_fields_rounded),
@@ -283,40 +187,59 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
           ],
         ],
       ),
-      body: _isQuizMode
-          ? _buildQuizUI()
-          : _buildContentUI(fontSize, height, wordSpacing),
+      body: lessonAsync.when(
+        data: (lesson) {
+          if (lesson == null) {
+            return const Center(child: Text("Lesson not found"));
+          }
+          return _isQuizMode
+              ? _buildQuizUI(lesson)
+              : _buildContentUI(lesson, fontSize, height, wordSpacing);
+        },
+        error: (err, stack) => Center(child: Text("Error: $err")),
+        loading: () => const Center(child: CircularProgressIndicator()),
+      ),
     );
   }
 
-  Widget _buildContentUI(double fontSize, double height, double wordSpacing) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+  void _toggleAudio(String content) async {
+    if (_isPlaying) {
+      await _flutterTts.stop();
+      if (mounted) setState(() => _isPlaying = false);
+    } else {
+      if (mounted) setState(() => _isPlaying = true);
+      await _flutterTts.speak(content);
     }
+  }
 
+  Widget _buildContentUI(
+    var lesson,
+    double fontSize,
+    double height,
+    double wordSpacing,
+  ) {
+    // var lesson to avoid import issues here, but it is Lesson
     return SingleChildScrollView(
       controller: _scrollController,
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
           Text(
-            _sessionTitle,
+            lesson.title,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: CozyColors.textMain,
             ),
           ),
           const SizedBox(height: 24),
-          // Content
           Text(
-            _sessionContent,
+            lesson.content,
             style: GoogleFonts.outfit(
               fontSize: fontSize,
               height: height,
               wordSpacing: wordSpacing,
-              color: CozyColors.textMain,
+              color: CozyColors.textMain, // Dynamic text color
             ),
           ),
           const SizedBox(height: 48),
@@ -336,20 +259,28 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     );
   }
 
-  Widget _buildQuizUI() {
-    final question = _questions[_currentQuestionIndex];
+  Widget _buildQuizUI(var lesson) {
+    if (lesson.questions.isEmpty) {
+      // Assuming questions is available
+      return const Center(child: Text("No quiz available for this lesson."));
+    }
+
+    // We need to map the Isar List<QuizQuestion> to what the UI expects
+    // Actually we can just use the object directly if we typed it, but for safety:
+    final question = lesson.questions[_currentQuestionIndex];
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            "Question ${_currentQuestionIndex + 1} of ${_questions.length}",
+            "Question ${_currentQuestionIndex + 1} of ${lesson.questions.length}",
             style: const TextStyle(color: CozyColors.textSub),
           ),
           const SizedBox(height: 16),
           Text(
-            question['question'],
+            question.question,
             style: GoogleFonts.outfit(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -357,21 +288,70 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
             ),
           ),
           const SizedBox(height: 32),
-          ...(question['options'] as List<String>).asMap().entries.map((entry) {
+          ...(question.options as List<String>).asMap().entries.map((entry) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: CozyColors.cardBg,
+                  backgroundColor: Theme.of(context).cardColor,
                   foregroundColor: CozyColors.textMain,
                   padding: const EdgeInsets.all(20),
                   alignment: Alignment.centerLeft,
                 ),
-                onPressed: () => _submitAnswer(entry.key),
+                // Need to update _submitAnswer to take lesson as well or just pass data
+                onPressed: () => _submitAnswer(entry.key, lesson),
                 child: Text(entry.value, style: const TextStyle(fontSize: 18)),
               ),
             );
           }),
+        ],
+      ),
+    );
+  }
+
+  void _submitAnswer(int selectedIndex, var lesson) {
+    final currentQ = lesson.questions[_currentQuestionIndex];
+    final correctIndex = currentQ.correctIndex;
+
+    if (selectedIndex == correctIndex) {
+      _score++;
+      _showFeedback(true, currentQ.explanation);
+    } else {
+      _showFeedback(false, currentQ.explanation);
+      ref
+          .read(mistakeServiceProvider)
+          .logMistake(
+            lessonId: int.tryParse(widget.lessonId) ?? 1,
+            question: currentQ.question,
+            userAnswer: currentQ.options[selectedIndex],
+            correctAnswer: currentQ.options[correctIndex],
+          );
+    }
+
+    if (_currentQuestionIndex < lesson.questions.length - 1) {
+      setState(() {
+        _currentQuestionIndex++;
+      });
+    } else {
+      _showCompletionDialog(lesson.questions.length); // Pass total
+    }
+  }
+
+  void _showCompletionDialog(int total) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text("Lesson Complete!"),
+        content: Text("You scored $_score/$total"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Close page
+            },
+            child: const Text("Finish"),
+          ),
         ],
       ),
     );

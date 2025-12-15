@@ -5,6 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../app/theme/cozy_theme.dart';
 import '../../shared/providers/global_providers.dart';
 import '../mode_detection/models/learning_mode.dart';
+import '../../shared/services/lesson_service.dart';
+import '../../shared/models/lesson.dart';
 
 // Mock providers for Dashboard stats
 final focusLevelProvider = Provider<int>(
@@ -98,7 +100,9 @@ class DashboardPage extends ConsumerWidget {
 
   Widget _buildHeroLessonCard(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/learning-session/solar-system-1'),
+      onTap: () => context.push(
+        '/learning-session/1',
+      ), // Hardcoded to first lesson for now
       child: Container(
         height: 180,
         decoration: BoxDecoration(
@@ -221,89 +225,107 @@ class DashboardPage extends ConsumerWidget {
   }
 
   Widget _buildExploreCourses(BuildContext context) {
-    final courses = [
-      {
-        'title': 'Ocean Life',
-        'color': CozyColors.secondary,
-        'icon': Icons.water_drop,
-      },
-      {'title': 'Dinosaurs', 'color': Colors.orange, 'icon': Icons.pets},
-      {
-        'title': 'Robotics',
-        'color': Colors.purple,
-        'icon': Icons.precision_manufacturing,
-      },
-      {'title': 'Art & Color', 'color': Colors.pink, 'icon': Icons.palette},
-    ];
+    // Dynamic access to provider could be better via Consumer or passing in, but DashboardPage IS a ConsumerWidget
+    // However, buildExploreCourses is a helper method. We should have easy access to ref if we pass it or if we move this logic.
+    // For now, let's use Consumer wrapper strictly for this part or refactor.
+    // DashboardPage build() has ref.
+    // But _buildExploreCourses takes context. I need ref.
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Explore Courses",
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            // Color handled by Theme
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 160,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: courses.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              final course = courses[index];
-              return Container(
-                width: 140,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: (course['color'] as Color).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: (course['color'] as Color).withOpacity(0.3),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).cardColor, // Adaptive card color
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        course['icon'] as IconData,
-                        color: course['color'] as Color,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      course['title'] as String,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Start",
-                      style: TextStyle(
-                        color: (course['color'] as Color),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(delay: (800 + (index * 100)).ms).slideX();
-            },
-          ),
-        ),
-      ],
+    // Quick Fix: Wrap in Consumer
+    return Consumer(
+      builder: (context, ref, _) {
+        final lessonsAsync = ref.watch(allLessonsProvider);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Explore Courses",
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 160,
+              child: lessonsAsync.when(
+                data: (lessons) {
+                  if (lessons.isEmpty) return const SizedBox.shrink();
+
+                  return ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: lessons.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 16),
+                    itemBuilder: (context, index) {
+                      final lesson = lessons[index];
+                      final colors = [
+                        CozyColors.primary,
+                        CozyColors.secondary,
+                        CozyColors.accent,
+                        Colors.orange,
+                        Colors.purple,
+                        Colors.pink,
+                      ];
+                      final color = colors[index % colors.length];
+
+                      final icons = [
+                        Icons.star_rounded,
+                        Icons.water_drop,
+                        Icons.pets,
+                        Icons.science,
+                      ];
+                      final icon = icons[index % icons.length];
+
+                      return Container(
+                            width: 140,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: color.withOpacity(0.3)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(icon, color: color),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  lesson.category,
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Start",
+                                  style: TextStyle(
+                                    color: color,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                          .animate()
+                          .fadeIn(delay: (200 + (index * 100)).ms)
+                          .slideX();
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

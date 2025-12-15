@@ -34,11 +34,8 @@ final appRouter = GoRouter(
       path: '/learning-session/:id',
       builder: (context, state) {
         final id = state.pathParameters['id'];
-        final extras = state.extra as Map<String, dynamic>?;
         return LearningSessionPage(
-          lessonId: id,
-          title: extras?['title'], // Optional fallback
-          content: extras?['content'], // Optional fallback
+          lessonId: id ?? '1', // Default to 1 if missing
         );
       },
     ),

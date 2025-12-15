@@ -13,4 +13,11 @@ class UserProgress {
   late int highScore;
 
   late DateTime lastPlayed;
+
+  int currentStreak = 0;
+
+  /// 0 to 100
+  int focusScore = 50;
+
+  List<String> badges = [];
 }

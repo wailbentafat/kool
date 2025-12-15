@@ -17,23 +17,38 @@ const UserProgressSchema = CollectionSchema(
   name: r'UserProgress',
   id: 518958300452706037,
   properties: {
-    r'highScore': PropertySchema(
+    r'badges': PropertySchema(
       id: 0,
+      name: r'badges',
+      type: IsarType.stringList,
+    ),
+    r'currentStreak': PropertySchema(
+      id: 1,
+      name: r'currentStreak',
+      type: IsarType.long,
+    ),
+    r'focusScore': PropertySchema(
+      id: 2,
+      name: r'focusScore',
+      type: IsarType.long,
+    ),
+    r'highScore': PropertySchema(
+      id: 3,
       name: r'highScore',
       type: IsarType.long,
     ),
     r'isCompleted': PropertySchema(
-      id: 1,
+      id: 4,
       name: r'isCompleted',
       type: IsarType.bool,
     ),
     r'lastPlayed': PropertySchema(
-      id: 2,
+      id: 5,
       name: r'lastPlayed',
       type: IsarType.dateTime,
     ),
     r'lessonId': PropertySchema(
-      id: 3,
+      id: 6,
       name: r'lessonId',
       type: IsarType.long,
     )
@@ -58,6 +73,13 @@ int _userProgressEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.badges.length * 3;
+  {
+    for (var i = 0; i < object.badges.length; i++) {
+      final value = object.badges[i];
+      bytesCount += value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -67,10 +89,13 @@ void _userProgressSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.highScore);
-  writer.writeBool(offsets[1], object.isCompleted);
-  writer.writeDateTime(offsets[2], object.lastPlayed);
-  writer.writeLong(offsets[3], object.lessonId);
+  writer.writeStringList(offsets[0], object.badges);
+  writer.writeLong(offsets[1], object.currentStreak);
+  writer.writeLong(offsets[2], object.focusScore);
+  writer.writeLong(offsets[3], object.highScore);
+  writer.writeBool(offsets[4], object.isCompleted);
+  writer.writeDateTime(offsets[5], object.lastPlayed);
+  writer.writeLong(offsets[6], object.lessonId);
 }
 
 UserProgress _userProgressDeserialize(
@@ -80,11 +105,14 @@ UserProgress _userProgressDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = UserProgress();
-  object.highScore = reader.readLong(offsets[0]);
+  object.badges = reader.readStringList(offsets[0]) ?? [];
+  object.currentStreak = reader.readLong(offsets[1]);
+  object.focusScore = reader.readLong(offsets[2]);
+  object.highScore = reader.readLong(offsets[3]);
   object.id = id;
-  object.isCompleted = reader.readBool(offsets[1]);
-  object.lastPlayed = reader.readDateTime(offsets[2]);
-  object.lessonId = reader.readLong(offsets[3]);
+  object.isCompleted = reader.readBool(offsets[4]);
+  object.lastPlayed = reader.readDateTime(offsets[5]);
+  object.lessonId = reader.readLong(offsets[6]);
   return object;
 }
 
@@ -96,12 +124,18 @@ P _userProgressDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 2:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 3:
+      return (reader.readLong(offset)) as P;
+    case 4:
+      return (reader.readBool(offset)) as P;
+    case 5:
+      return (reader.readDateTime(offset)) as P;
+    case 6:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -202,6 +236,343 @@ extension UserProgressQueryWhere
 
 extension UserProgressQueryFilter
     on QueryBuilder<UserProgress, UserProgress, QFilterCondition> {
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'badges',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'badges',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'badges',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'badges',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'badges',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'badges',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'badges',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'badges',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'badges',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'badges',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'badges',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'badges',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'badges',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'badges',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'badges',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      badgesLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'badges',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      currentStreakEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'currentStreak',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      currentStreakGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'currentStreak',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      currentStreakLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'currentStreak',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      currentStreakBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'currentStreak',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      focusScoreEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'focusScore',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      focusScoreGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'focusScore',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      focusScoreLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'focusScore',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      focusScoreBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'focusScore',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
       highScoreEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
@@ -442,6 +813,32 @@ extension UserProgressQueryLinks
 
 extension UserProgressQuerySortBy
     on QueryBuilder<UserProgress, UserProgress, QSortBy> {
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy> sortByCurrentStreak() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currentStreak', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy>
+      sortByCurrentStreakDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currentStreak', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy> sortByFocusScore() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'focusScore', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy>
+      sortByFocusScoreDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'focusScore', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserProgress, UserProgress, QAfterSortBy> sortByHighScore() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'highScore', Sort.asc);
@@ -495,6 +892,32 @@ extension UserProgressQuerySortBy
 
 extension UserProgressQuerySortThenBy
     on QueryBuilder<UserProgress, UserProgress, QSortThenBy> {
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy> thenByCurrentStreak() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currentStreak', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy>
+      thenByCurrentStreakDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currentStreak', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy> thenByFocusScore() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'focusScore', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy>
+      thenByFocusScoreDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'focusScore', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserProgress, UserProgress, QAfterSortBy> thenByHighScore() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'highScore', Sort.asc);
@@ -560,6 +983,25 @@ extension UserProgressQuerySortThenBy
 
 extension UserProgressQueryWhereDistinct
     on QueryBuilder<UserProgress, UserProgress, QDistinct> {
+  QueryBuilder<UserProgress, UserProgress, QDistinct> distinctByBadges() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'badges');
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QDistinct>
+      distinctByCurrentStreak() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'currentStreak');
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QDistinct> distinctByFocusScore() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'focusScore');
+    });
+  }
+
   QueryBuilder<UserProgress, UserProgress, QDistinct> distinctByHighScore() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'highScore');
@@ -590,6 +1032,24 @@ extension UserProgressQueryProperty
   QueryBuilder<UserProgress, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<UserProgress, List<String>, QQueryOperations> badgesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'badges');
+    });
+  }
+
+  QueryBuilder<UserProgress, int, QQueryOperations> currentStreakProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'currentStreak');
+    });
+  }
+
+  QueryBuilder<UserProgress, int, QQueryOperations> focusScoreProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'focusScore');
     });
   }
 

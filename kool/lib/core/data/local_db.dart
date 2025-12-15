@@ -3,6 +3,7 @@ import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../shared/models/lesson.dart';
 import '../../shared/models/user_progress.dart';
+import '../../shared/models/mistake.dart';
 
 class LocalDB {
   late Future<Isar> db;
@@ -17,6 +18,7 @@ class LocalDB {
       return await Isar.open([
         LessonSchema,
         UserProgressSchema,
+        MistakeSchema,
       ], directory: dir.path);
     }
     return Isar.getInstance()!;

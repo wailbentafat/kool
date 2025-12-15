@@ -5,12 +5,22 @@ import '../../app/theme/cozy_theme.dart';
 import '../../shared/providers/global_providers.dart';
 import '../mode_detection/models/learning_mode.dart';
 
+// Mock providers for Dashboard stats
+final focusLevelProvider = Provider<int>(
+  (ref) => 85,
+); // TODO: Calculate from mistakes
+final streakProvider = Provider<int>(
+  (ref) => 5,
+); // TODO: Calculate from history
+
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(learningModeProvider);
+    final focusLevel = ref.watch(focusLevelProvider);
+    final streak = ref.watch(streakProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -23,7 +33,7 @@ class DashboardPage extends ConsumerWidget {
               const SizedBox(height: 32),
               _buildContinueLearning(context),
               const SizedBox(height: 24),
-              _buildFocusLevel(context),
+              _buildFocusLevel(context, focusLevel, streak),
               const SizedBox(height: 24),
               _buildQuickActions(context),
             ],
@@ -175,7 +185,7 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildFocusLevel(BuildContext context) {
+  Widget _buildFocusLevel(BuildContext context, int focus, int streak) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -184,20 +194,20 @@ class DashboardPage extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.bolt_rounded, color: Colors.orange, size: 32),
+          Icon(Icons.bolt_rounded, color: CozyColors.accent, size: 32),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Focus Level",
+                  "Focus Level: $focus%",
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  "Great job today! You're on fire.",
+                  "On a $streak day streak! Keep it up!",
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: CozyColors.textSub),

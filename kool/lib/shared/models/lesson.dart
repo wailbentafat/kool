@@ -7,6 +7,7 @@ class Lesson {
   Id id = Isar.autoIncrement;
 
   late String title;
+
   late String content;
 
   @Enumerated(EnumType.ordinal)
@@ -16,6 +17,16 @@ class Lesson {
 
   /// Duration in minutes
   late int duration;
+
+  late List<QuizQuestion> questions;
+}
+
+@embedded
+class QuizQuestion {
+  late String question;
+  late List<String> options;
+  late int correctIndex;
+  late String explanation;
 }
 
 enum LessonDifficulty { beginner, intermediate, advanced }

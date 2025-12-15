@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/theme/cozy_theme.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../shared/providers/global_providers.dart';
+import '../../shared/services/mistake_service.dart';
 import '../mode_detection/models/learning_mode.dart';
 
 // Local state for the session settings
@@ -45,6 +46,12 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
   int _pauseCount = 0;
   DateTime? _lastScrollTime;
 
+  // Quiz State
+  bool _isQuizMode = false;
+  int _currentQuestionIndex = 0;
+  int _score = 0;
+  List<Map<String, dynamic>> _questions = [];
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +60,22 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     _scrollController.addListener(_onScroll);
 
     _initTts();
+
+    // Parse questions if available (mock for now)
+    _questions = [
+      {
+        'question': 'What is the largest planet?',
+        'options': ['Earth', 'Mars', 'Jupiter', 'Venus'],
+        'correctIndex': 2,
+        'explanation': 'Jupiter is the largest planet in our solar system.',
+      },
+      {
+        'question': 'Which planet has rings?',
+        'options': ['Mercury', 'Saturn', 'Mars', 'Earth'],
+        'correctIndex': 1,
+        'explanation': 'Saturn is famous for its beautiful rings.',
+      },
+    ];
 
     // Initial setup based on global mode
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -131,6 +154,76 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     }
   }
 
+  void _submitAnswer(int selectedIndex) {
+    final currentQ = _questions[_currentQuestionIndex];
+    final correctIndex = currentQ['correctIndex'] as int;
+
+    if (selectedIndex == correctIndex) {
+      _score++;
+      _showFeedback(true, currentQ['explanation']);
+    } else {
+      _showFeedback(false, currentQ['explanation']);
+      // Log mistake
+      ref
+          .read(mistakeServiceProvider)
+          .logMistake(
+            lessonId: 1, // Simulated ID
+            question: currentQ['question'],
+            userAnswer: currentQ['options'][selectedIndex],
+            correctAnswer: currentQ['options'][correctIndex],
+          );
+    }
+
+    if (_currentQuestionIndex < _questions.length - 1) {
+      setState(() {
+        _currentQuestionIndex++;
+      });
+    } else {
+      // Quiz Finished
+      _showCompletionDialog();
+    }
+  }
+
+  void _showFeedback(bool isCorrect, String explanation) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isCorrect ? "Correct! 🎉" : "Not quite.",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text(explanation),
+          ],
+        ),
+        backgroundColor: isCorrect ? CozyColors.success : CozyColors.error,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showCompletionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text("Lesson Complete!"),
+        content: Text("You scored $_score/${_questions.length}"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Close page
+            },
+            child: const Text("Finish"),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ... (existing tracking methods)
 
   @override
@@ -153,58 +246,109 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          IconButton(
-            icon: Icon(
-              _isPlaying
-                  ? Icons.pause_circle_filled_rounded
-                  : Icons.volume_up_rounded,
+          if (!_isQuizMode) ...[
+            IconButton(
+              icon: Icon(
+                _isPlaying
+                    ? Icons.pause_circle_filled_rounded
+                    : Icons.volume_up_rounded,
+              ),
+              color: _isPlaying ? CozyColors.primary : CozyColors.textMain,
+              onPressed: _toggleAudio,
             ),
-            color: _isPlaying ? CozyColors.primary : CozyColors.textMain,
-            onPressed: _toggleAudio,
+            IconButton(
+              icon: const Icon(Icons.text_fields_rounded),
+              onPressed: () => _showformattingSettings(context),
+            ),
+          ],
+        ],
+      ),
+      body: _isQuizMode
+          ? _buildQuizUI()
+          : _buildContentUI(fontSize, height, wordSpacing),
+    );
+  }
+
+  Widget _buildContentUI(double fontSize, double height, double wordSpacing) {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title
+          Text(
+            widget.title,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: CozyColors.textMain,
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.text_fields_rounded),
-            onPressed: () => _showformattingSettings(context),
+          const SizedBox(height: 24),
+          // Content
+          Text(
+            widget.content,
+            style: GoogleFonts.outfit(
+              fontSize: fontSize,
+              height: height,
+              wordSpacing: wordSpacing,
+              color: CozyColors.textMain,
+            ),
+          ),
+          const SizedBox(height: 48),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _isQuizMode = true;
+                });
+              },
+              icon: const Icon(Icons.quiz_rounded),
+              label: const Text("Take Quiz"),
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title
-            Text(
-              widget.title,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: CozyColors.textMain,
-              ),
+    );
+  }
+
+  Widget _buildQuizUI() {
+    final question = _questions[_currentQuestionIndex];
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            "Question ${_currentQuestionIndex + 1} of ${_questions.length}",
+            style: const TextStyle(color: CozyColors.textSub),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            question['question'],
+            style: GoogleFonts.outfit(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: CozyColors.textMain,
             ),
-            const SizedBox(height: 24),
-            // Content
-            Text(
-              widget.content,
-              style: GoogleFonts.outfit(
-                fontSize: fontSize,
-                height: height,
-                wordSpacing: wordSpacing,
-                color: CozyColors.textMain,
+          ),
+          const SizedBox(height: 32),
+          ...(question['options'] as List<String>).asMap().entries.map((entry) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: CozyColors.cardBg,
+                  foregroundColor: CozyColors.textMain,
+                  padding: const EdgeInsets.all(20),
+                  alignment: Alignment.centerLeft,
+                ),
+                onPressed: () => _submitAnswer(entry.key),
+                child: Text(entry.value, style: const TextStyle(fontSize: 18)),
               ),
-            ),
-            const SizedBox(height: 48),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                icon: const Icon(Icons.check_circle_outline_rounded),
-                label: const Text("Complete Session"),
-              ),
-            ),
-          ],
-        ),
+            );
+          }),
+        ],
       ),
     );
   }

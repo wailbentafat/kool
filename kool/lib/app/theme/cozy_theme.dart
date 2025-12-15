@@ -14,6 +14,8 @@ class CozyColors {
   static const Color surface = Color(0xFFFAF9F6);
   static const Color success = Color(0xFFA3D9B5);
   static const Color error = Color(0xFFE5989B);
+  static const Color warning = Color(0xFFF4A261); // Soft Orange
+  static const Color accent = Color(0xFFF4D35E); // Muted Gold
 }
 
 class CozyTheme {

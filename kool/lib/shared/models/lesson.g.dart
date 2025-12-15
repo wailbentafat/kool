@@ -38,8 +38,14 @@ const LessonSchema = CollectionSchema(
       name: r'duration',
       type: IsarType.long,
     ),
-    r'title': PropertySchema(
+    r'questions': PropertySchema(
       id: 4,
+      name: r'questions',
+      type: IsarType.objectList,
+      target: r'QuizQuestion',
+    ),
+    r'title': PropertySchema(
+      id: 5,
       name: r'title',
       type: IsarType.string,
     )
@@ -51,7 +57,7 @@ const LessonSchema = CollectionSchema(
   idName: r'id',
   indexes: {},
   links: {},
-  embeddedSchemas: {},
+  embeddedSchemas: {r'QuizQuestion': QuizQuestionSchema},
   getId: _lessonGetId,
   getLinks: _lessonGetLinks,
   attach: _lessonAttach,
@@ -66,6 +72,14 @@ int _lessonEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.category.length * 3;
   bytesCount += 3 + object.content.length * 3;
+  bytesCount += 3 + object.questions.length * 3;
+  {
+    final offsets = allOffsets[QuizQuestion]!;
+    for (var i = 0; i < object.questions.length; i++) {
+      final value = object.questions[i];
+      bytesCount += QuizQuestionSchema.estimateSize(value, offsets, allOffsets);
+    }
+  }
   bytesCount += 3 + object.title.length * 3;
   return bytesCount;
 }
@@ -80,7 +94,13 @@ void _lessonSerialize(
   writer.writeString(offsets[1], object.content);
   writer.writeByte(offsets[2], object.difficulty.index);
   writer.writeLong(offsets[3], object.duration);
-  writer.writeString(offsets[4], object.title);
+  writer.writeObjectList<QuizQuestion>(
+    offsets[4],
+    allOffsets,
+    QuizQuestionSchema.serialize,
+    object.questions,
+  );
+  writer.writeString(offsets[5], object.title);
 }
 
 Lesson _lessonDeserialize(
@@ -97,7 +117,14 @@ Lesson _lessonDeserialize(
           LessonDifficulty.beginner;
   object.duration = reader.readLong(offsets[3]);
   object.id = id;
-  object.title = reader.readString(offsets[4]);
+  object.questions = reader.readObjectList<QuizQuestion>(
+        offsets[4],
+        QuizQuestionSchema.deserialize,
+        allOffsets,
+        QuizQuestion(),
+      ) ??
+      [];
+  object.title = reader.readString(offsets[5]);
   return object;
 }
 
@@ -118,6 +145,14 @@ P _lessonDeserializeProp<P>(
     case 3:
       return (reader.readLong(offset)) as P;
     case 4:
+      return (reader.readObjectList<QuizQuestion>(
+            offset,
+            QuizQuestionSchema.deserialize,
+            allOffsets,
+            QuizQuestion(),
+          ) ??
+          []) as P;
+    case 5:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -641,6 +676,91 @@ extension LessonQueryFilter on QueryBuilder<Lesson, Lesson, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Lesson, Lesson, QAfterFilterCondition> questionsLengthEqualTo(
+      int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'questions',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Lesson, Lesson, QAfterFilterCondition> questionsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'questions',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Lesson, Lesson, QAfterFilterCondition> questionsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'questions',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Lesson, Lesson, QAfterFilterCondition> questionsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'questions',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Lesson, Lesson, QAfterFilterCondition>
+      questionsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'questions',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Lesson, Lesson, QAfterFilterCondition> questionsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'questions',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<Lesson, Lesson, QAfterFilterCondition> titleEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -772,7 +892,14 @@ extension LessonQueryFilter on QueryBuilder<Lesson, Lesson, QFilterCondition> {
   }
 }
 
-extension LessonQueryObject on QueryBuilder<Lesson, Lesson, QFilterCondition> {}
+extension LessonQueryObject on QueryBuilder<Lesson, Lesson, QFilterCondition> {
+  QueryBuilder<Lesson, Lesson, QAfterFilterCondition> questionsElement(
+      FilterQuery<QuizQuestion> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'questions');
+    });
+  }
+}
 
 extension LessonQueryLinks on QueryBuilder<Lesson, Lesson, QFilterCondition> {}
 
@@ -979,9 +1106,677 @@ extension LessonQueryProperty on QueryBuilder<Lesson, Lesson, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Lesson, List<QuizQuestion>, QQueryOperations>
+      questionsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'questions');
+    });
+  }
+
   QueryBuilder<Lesson, String, QQueryOperations> titleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'title');
     });
   }
 }
+
+// **************************************************************************
+// IsarEmbeddedGenerator
+// **************************************************************************
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
+
+const QuizQuestionSchema = Schema(
+  name: r'QuizQuestion',
+  id: 6768406734576234344,
+  properties: {
+    r'correctIndex': PropertySchema(
+      id: 0,
+      name: r'correctIndex',
+      type: IsarType.long,
+    ),
+    r'explanation': PropertySchema(
+      id: 1,
+      name: r'explanation',
+      type: IsarType.string,
+    ),
+    r'options': PropertySchema(
+      id: 2,
+      name: r'options',
+      type: IsarType.stringList,
+    ),
+    r'question': PropertySchema(
+      id: 3,
+      name: r'question',
+      type: IsarType.string,
+    )
+  },
+  estimateSize: _quizQuestionEstimateSize,
+  serialize: _quizQuestionSerialize,
+  deserialize: _quizQuestionDeserialize,
+  deserializeProp: _quizQuestionDeserializeProp,
+);
+
+int _quizQuestionEstimateSize(
+  QuizQuestion object,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  var bytesCount = offsets.last;
+  bytesCount += 3 + object.explanation.length * 3;
+  bytesCount += 3 + object.options.length * 3;
+  {
+    for (var i = 0; i < object.options.length; i++) {
+      final value = object.options[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.question.length * 3;
+  return bytesCount;
+}
+
+void _quizQuestionSerialize(
+  QuizQuestion object,
+  IsarWriter writer,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  writer.writeLong(offsets[0], object.correctIndex);
+  writer.writeString(offsets[1], object.explanation);
+  writer.writeStringList(offsets[2], object.options);
+  writer.writeString(offsets[3], object.question);
+}
+
+QuizQuestion _quizQuestionDeserialize(
+  Id id,
+  IsarReader reader,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  final object = QuizQuestion();
+  object.correctIndex = reader.readLong(offsets[0]);
+  object.explanation = reader.readString(offsets[1]);
+  object.options = reader.readStringList(offsets[2]) ?? [];
+  object.question = reader.readString(offsets[3]);
+  return object;
+}
+
+P _quizQuestionDeserializeProp<P>(
+  IsarReader reader,
+  int propertyId,
+  int offset,
+  Map<Type, List<int>> allOffsets,
+) {
+  switch (propertyId) {
+    case 0:
+      return (reader.readLong(offset)) as P;
+    case 1:
+      return (reader.readString(offset)) as P;
+    case 2:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 3:
+      return (reader.readString(offset)) as P;
+    default:
+      throw IsarError('Unknown property with id $propertyId');
+  }
+}
+
+extension QuizQuestionQueryFilter
+    on QueryBuilder<QuizQuestion, QuizQuestion, QFilterCondition> {
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      correctIndexEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'correctIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      correctIndexGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'correctIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      correctIndexLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'correctIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      correctIndexBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'correctIndex',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      explanationEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'explanation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      explanationGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'explanation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      explanationLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'explanation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      explanationBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'explanation',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      explanationStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'explanation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      explanationEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'explanation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      explanationContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'explanation',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      explanationMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'explanation',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      explanationIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'explanation',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      explanationIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'explanation',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'options',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'options',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'options',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'options',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'options',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'options',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'options',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'options',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'options',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'options',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'options',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'options',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'options',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'options',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'options',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      optionsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'options',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      questionEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'question',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      questionGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'question',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      questionLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'question',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      questionBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'question',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      questionStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'question',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      questionEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'question',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      questionContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'question',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      questionMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'question',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      questionIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'question',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<QuizQuestion, QuizQuestion, QAfterFilterCondition>
+      questionIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'question',
+        value: '',
+      ));
+    });
+  }
+}
+
+extension QuizQuestionQueryObject
+    on QueryBuilder<QuizQuestion, QuizQuestion, QFilterCondition> {}

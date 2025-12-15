@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../app/theme/cozy_theme.dart';
 import '../../shared/services/user_preferences_service.dart';
 import '../../shared/providers/global_providers.dart';
@@ -22,6 +23,17 @@ class ProfilePage extends ConsumerWidget {
           Center(
             child: Column(
               children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.history_edu_rounded,
+                    color: CozyColors.primary,
+                  ),
+                  title: const Text('My Mistakes'),
+                  subtitle: const Text('Review what you missed'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push('/mistakes'),
+                ),
+                const Divider(),
                 const CircleAvatar(
                   radius: 40,
                   backgroundColor: CozyColors.primary,

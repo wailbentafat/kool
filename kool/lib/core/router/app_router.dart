@@ -4,12 +4,14 @@ import '../../features/onboarding/onboarding_page.dart';
 import '../../features/mode_detection/mode_detection_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
 import '../../features/learning_session/learning_session_page.dart';
-import '../../features/lessons/lesson_hub_page.dart';
+
 import '../../features/games/games_page.dart';
 import '../../features/games/memory_game_page.dart';
 import '../../features/games/speed_game_page.dart';
+import '../../features/games/pattern_game_page.dart';
 import '../../features/study_support/study_support_page.dart';
 import '../../features/profile/profile_page.dart';
+import '../../features/profile/mistake_summary_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -23,9 +25,10 @@ final appRouter = GoRouter(
       path: '/dashboard',
       builder: (context, state) => const DashboardPage(),
     ),
+    GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
     GoRoute(
-      path: '/lessons',
-      builder: (context, state) => const LessonHubPage(),
+      path: '/mistakes',
+      builder: (context, state) => const MistakeSummaryPage(),
     ),
     GoRoute(
       path: '/learning-session',
@@ -48,6 +51,10 @@ final appRouter = GoRouter(
         GoRoute(
           path: 'speed',
           builder: (context, state) => const SpeedGamePage(),
+        ),
+        GoRoute(
+          path: 'pattern',
+          builder: (context, state) => const PatternGamePage(),
         ),
       ],
     ),

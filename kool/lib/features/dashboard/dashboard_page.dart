@@ -225,13 +225,6 @@ class DashboardPage extends ConsumerWidget {
   }
 
   Widget _buildExploreCourses(BuildContext context) {
-    // Dynamic access to provider could be better via Consumer or passing in, but DashboardPage IS a ConsumerWidget
-    // However, buildExploreCourses is a helper method. We should have easy access to ref if we pass it or if we move this logic.
-    // For now, let's use Consumer wrapper strictly for this part or refactor.
-    // DashboardPage build() has ref.
-    // But _buildExploreCourses takes context. I need ref.
-
-    // Quick Fix: Wrap in Consumer
     return Consumer(
       builder: (context, ref, _) {
         final lessonsAsync = ref.watch(allLessonsProvider);
@@ -276,41 +269,48 @@ class DashboardPage extends ConsumerWidget {
                       ];
                       final icon = icons[index % icons.length];
 
-                      return Container(
-                            width: 140,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: color.withOpacity(0.3)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).cardColor,
-                                    shape: BoxShape.circle,
+                      return GestureDetector(
+                            onTap: () {
+                              context.push('/learning-session/${lesson.id}');
+                            },
+                            child: Container(
+                              width: 140,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: color.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).cardColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(icon, color: color),
                                   ),
-                                  child: Icon(icon, color: color),
-                                ),
-                                const Spacer(),
-                                Text(
-                                  lesson.category,
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Start",
-                                  style: TextStyle(
-                                    color: color,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
+                                  const Spacer(),
+                                  Text(
+                                    lesson.category,
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Start",
+                                    style: TextStyle(
+                                      color: color,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           )
                           .animate()

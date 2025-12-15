@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../app/theme/cozy_theme.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:confetti/confetti.dart'; // Import confetti
 import '../../shared/providers/global_providers.dart';
 import '../../shared/services/mistake_service.dart';
-import '../../shared/services/lesson_service.dart'; // import lesson service
+import '../../shared/services/lesson_service.dart';
+import '../../shared/services/progress_service.dart'; // Import progress service
 import '../mode_detection/models/learning_mode.dart';
 
 // Local state for the session settings
@@ -34,6 +36,7 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
   final ScrollController _scrollController = ScrollController();
   final Stopwatch _sessionTimer = Stopwatch();
   final FlutterTts _flutterTts = FlutterTts();
+  late ConfettiController _confettiController; // Confetti controller
 
   bool _isPlaying = false;
 
@@ -49,6 +52,9 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
     _sessionTimer.start();
     _lastScrollTime = DateTime.now();
     _scrollController.addListener(_onScroll);
@@ -59,6 +65,12 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
       _applyInitialModeSettings();
     });
   }
+
+  // ... (keep helper methods like _applyInitialModeSettings, etc. - skipping purely for brevity in this replace call, I should NOT remove them in reality.
+  // Wait, replace_file_content replaces the chunk. I must be careful not to delete methods.
+  // I will just modify initState and dispose separately to be safe.)
+
+  // Re-doing the replace to only target initState and dispose separately to minimize risk.
 
   void _applyInitialModeSettings() {
     final mode = ref.read(learningModeProvider);
@@ -144,6 +156,7 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     _scrollController.dispose();
     _sessionTimer.stop();
     _flutterTts.stop();
+    _confettiController.dispose();
     super.dispose();
   }
 
@@ -187,17 +200,36 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
           ],
         ],
       ),
-      body: lessonAsync.when(
-        data: (lesson) {
-          if (lesson == null) {
-            return const Center(child: Text("Lesson not found"));
-          }
-          return _isQuizMode
-              ? _buildQuizUI(lesson)
-              : _buildContentUI(lesson, fontSize, height, wordSpacing);
-        },
-        error: (err, stack) => Center(child: Text("Error: $err")),
-        loading: () => const Center(child: CircularProgressIndicator()),
+      body: Stack(
+        children: [
+          lessonAsync.when(
+            data: (lesson) {
+              if (lesson == null) {
+                return const Center(child: Text("Lesson not found"));
+              }
+              return _isQuizMode
+                  ? _buildQuizUI(lesson)
+                  : _buildContentUI(lesson, fontSize, height, wordSpacing);
+            },
+            error: (err, stack) => Center(child: Text("Error: $err")),
+            loading: () => const Center(child: CircularProgressIndicator()),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple,
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -337,13 +369,41 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     }
   }
 
-  void _showCompletionDialog(int total) {
+  void _showCompletionDialog(int total) async {
+    // Play confetti if score is good (e.g. > 50%)
+    if (_score / total > 0.5) {
+      _confettiController.play();
+
+      // Award Badge
+      // Simple logic: Badge name = Lesson Title or generic "Quiz Master"
+      // We don't have easy access to Lesson Title here unless we pass it.
+      // Let's award a generic one for now or fetch it.
+      await ref.read(progressServiceProvider).awardBadge("Quiz Star 🌟");
+      await ref
+          .read(progressServiceProvider)
+          .awardBadge("Lesson ${widget.lessonId} Master");
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text("Lesson Complete!"),
-        content: Text("You scored $_score/$total"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_score / total > 0.5)
+              const Text(
+                "🎉 Awesome Job! You earned a badge! 🎉",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: CozyColors.primary,
+                ),
+              ),
+            const SizedBox(height: 8),
+            Text("You scored $_score/$total"),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () {

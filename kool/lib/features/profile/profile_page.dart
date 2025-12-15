@@ -5,6 +5,7 @@ import '../../app/theme/cozy_theme.dart';
 import '../../shared/services/user_preferences_service.dart';
 import '../../shared/providers/global_providers.dart';
 import '../mode_detection/models/learning_mode.dart';
+import '../../shared/services/progress_service.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -117,6 +118,73 @@ class ProfilePage extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Badges Section
+          Text(
+            "My Badges",
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.bodySmall?.color,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Consumer(
+            builder: (context, ref, _) {
+              final progressAsync = ref.watch(userProgressProvider);
+              return progressAsync.when(
+                data: (progress) {
+                  final badges = progress?.badges ?? [];
+                  if (badges.isEmpty) {
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text("No badges yet. Keep learning! 🚀"),
+                      ),
+                    );
+                  }
+
+                  return SizedBox(
+                    height: 80,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: badges.length,
+                      itemBuilder: (context, index) {
+                        final badge = badges[index];
+                        return Container(
+                          margin: const EdgeInsets.only(right: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: CozyColors.accent.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: CozyColors.accent),
+                          ),
+                          child: Row(
+                            children: [
+                              const Text("🏆", style: TextStyle(fontSize: 24)),
+                              const SizedBox(width: 8),
+                              Text(
+                                badge,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+                loading: () => const LinearProgressIndicator(),
+                error: (_, __) => const Text("Could not load badges"),
+              );
+            },
+          ),
+
           const SizedBox(height: 24),
 
           // Appearance Settings

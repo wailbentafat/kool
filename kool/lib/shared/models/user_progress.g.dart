@@ -47,8 +47,14 @@ const UserProgressSchema = CollectionSchema(
       name: r'lastPlayed',
       type: IsarType.dateTime,
     ),
-    r'lessonId': PropertySchema(
+    r'learningMode': PropertySchema(
       id: 6,
+      name: r'learningMode',
+      type: IsarType.byte,
+      enumMap: _UserProgresslearningModeEnumValueMap,
+    ),
+    r'lessonId': PropertySchema(
+      id: 7,
       name: r'lessonId',
       type: IsarType.long,
     )
@@ -95,7 +101,8 @@ void _userProgressSerialize(
   writer.writeLong(offsets[3], object.highScore);
   writer.writeBool(offsets[4], object.isCompleted);
   writer.writeDateTime(offsets[5], object.lastPlayed);
-  writer.writeLong(offsets[6], object.lessonId);
+  writer.writeByte(offsets[6], object.learningMode.index);
+  writer.writeLong(offsets[7], object.lessonId);
 }
 
 UserProgress _userProgressDeserialize(
@@ -112,7 +119,10 @@ UserProgress _userProgressDeserialize(
   object.id = id;
   object.isCompleted = reader.readBool(offsets[4]);
   object.lastPlayed = reader.readDateTime(offsets[5]);
-  object.lessonId = reader.readLong(offsets[6]);
+  object.learningMode = _UserProgresslearningModeValueEnumMap[
+          reader.readByteOrNull(offsets[6])] ??
+      LearningMode.normal;
+  object.lessonId = reader.readLong(offsets[7]);
   return object;
 }
 
@@ -136,11 +146,26 @@ P _userProgressDeserializeProp<P>(
     case 5:
       return (reader.readDateTime(offset)) as P;
     case 6:
+      return (_UserProgresslearningModeValueEnumMap[
+              reader.readByteOrNull(offset)] ??
+          LearningMode.normal) as P;
+    case 7:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
+
+const _UserProgresslearningModeEnumValueMap = {
+  'normal': 0,
+  'adhd': 1,
+  'dyslexia': 2,
+};
+const _UserProgresslearningModeValueEnumMap = {
+  0: LearningMode.normal,
+  1: LearningMode.adhd,
+  2: LearningMode.dyslexia,
+};
 
 Id _userProgressGetId(UserProgress object) {
   return object.id;
@@ -749,6 +774,62 @@ extension UserProgressQueryFilter
   }
 
   QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      learningModeEqualTo(LearningMode value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'learningMode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      learningModeGreaterThan(
+    LearningMode value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'learningMode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      learningModeLessThan(
+    LearningMode value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'learningMode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
+      learningModeBetween(
+    LearningMode lower,
+    LearningMode upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'learningMode',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterFilterCondition>
       lessonIdEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -877,6 +958,19 @@ extension UserProgressQuerySortBy
     });
   }
 
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy> sortByLearningMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'learningMode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy>
+      sortByLearningModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'learningMode', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserProgress, UserProgress, QAfterSortBy> sortByLessonId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lessonId', Sort.asc);
@@ -968,6 +1062,19 @@ extension UserProgressQuerySortThenBy
     });
   }
 
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy> thenByLearningMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'learningMode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProgress, UserProgress, QAfterSortBy>
+      thenByLearningModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'learningMode', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserProgress, UserProgress, QAfterSortBy> thenByLessonId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lessonId', Sort.asc);
@@ -1020,6 +1127,12 @@ extension UserProgressQueryWhereDistinct
     });
   }
 
+  QueryBuilder<UserProgress, UserProgress, QDistinct> distinctByLearningMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'learningMode');
+    });
+  }
+
   QueryBuilder<UserProgress, UserProgress, QDistinct> distinctByLessonId() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lessonId');
@@ -1068,6 +1181,13 @@ extension UserProgressQueryProperty
   QueryBuilder<UserProgress, DateTime, QQueryOperations> lastPlayedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastPlayed');
+    });
+  }
+
+  QueryBuilder<UserProgress, LearningMode, QQueryOperations>
+      learningModeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'learningMode');
     });
   }
 

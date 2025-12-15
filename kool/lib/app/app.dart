@@ -11,11 +11,12 @@ class LexiLearnApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final learningMode = ref.watch(learningModeProvider);
 
     return MaterialApp.router(
       title: 'LexiLearn AI',
-      theme: CozyTheme.light,
-      darkTheme: CozyTheme.dark,
+      theme: CozyTheme.getTheme(learningMode, ThemeMode.light),
+      darkTheme: CozyTheme.getTheme(learningMode, ThemeMode.dark),
       themeMode: themeMode,
       routerConfig: appRouter,
     );

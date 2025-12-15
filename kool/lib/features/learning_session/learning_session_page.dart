@@ -1,4 +1,4 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -10,6 +10,7 @@ import '../../shared/services/mistake_service.dart';
 import '../../shared/services/lesson_service.dart';
 import '../../shared/services/progress_service.dart'; // Import progress service
 import '../mode_detection/models/learning_mode.dart';
+import '../../shared/widgets/focus_blinders.dart';
 
 // Local state for the session settings
 final sessionFontSizeProvider = StateProvider.autoDispose<double>(
@@ -39,6 +40,7 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
   late ConfettiController _confettiController; // Confetti controller
 
   bool _isPlaying = false;
+  bool _isFocusBlindersEnabled = false; // Add state for blinders
 
   // Tracking
   int _pauseCount = 0;
@@ -194,6 +196,22 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
               },
             ),
             IconButton(
+              icon: Icon(
+                _isFocusBlindersEnabled
+                    ? Icons.visibility_off_rounded
+                    : Icons.visibility_rounded, // Eye icon for focus
+              ),
+              color: _isFocusBlindersEnabled
+                  ? CozyColors.primary
+                  : CozyColors.textMain,
+              tooltip: "Toggle Focus Mode",
+              onPressed: () {
+                setState(() {
+                  _isFocusBlindersEnabled = !_isFocusBlindersEnabled;
+                });
+              },
+            ),
+            IconButton(
               icon: const Icon(Icons.text_fields_rounded),
               onPressed: () => _showformattingSettings(context),
             ),
@@ -229,6 +247,10 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
               ],
             ),
           ),
+          if (_isFocusBlindersEnabled)
+            const Positioned.fill(
+              child: FocusBlinders(isEnabled: true, child: SizedBox.expand()),
+            ),
         ],
       ),
     );

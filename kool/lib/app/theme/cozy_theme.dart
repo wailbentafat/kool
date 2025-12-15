@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../features/mode_detection/models/learning_mode.dart';
 
 class CozyColors {
   // Warm, soft palette
@@ -26,90 +27,97 @@ class CozyColors {
 }
 
 class CozyTheme {
-  static ThemeData get light {
+  // --- Standard Colors ---
+  static ThemeData get light => getTheme(LearningMode.normal, ThemeMode.light);
+  static ThemeData get dark => getTheme(LearningMode.normal, ThemeMode.dark);
+
+  // --- Adaptive Theme Generation ---
+  static ThemeData getTheme(LearningMode mode, ThemeMode themeMode) {
+    // 1. Determine Colors based on Mode & Brightness
+    final isDark = themeMode == ThemeMode.dark;
+
+    Color background;
+    Color surface;
+    Color primary;
+    Color text;
+
+    if (mode == LearningMode.adhd) {
+      // ADHD: Calm, Cool colors (Greens/Blues) to reduce excitation
+      background = isDark
+          ? const Color(0xFF1E293B)
+          : const Color(0xFFF1F5F9); // Slate
+      surface = isDark ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0);
+      primary = const Color(0xFF38BDF8); // Sky Blue (Calming)
+      text = isDark ? const Color(0xFFF1F5F9) : const Color(0xFF334155);
+    } else if (mode == LearningMode.dyslexia) {
+      // Dyslexia: Warm/Off-white/Sepia to reduce visual stress
+      // Avoid pure white.
+      background = isDark
+          ? const Color(0xFF2C2522)
+          : const Color(0xFFFDF6E3); // Solarized Light/Dark basis
+      surface = isDark ? const Color(0xFF241D1A) : const Color(0xFFEEE8D5);
+      primary = const Color(0xFFD33682); // Magenta (Contrast) or Orange
+      text = isDark
+          ? const Color(0xFFFDF6E3)
+          : const Color(0xFF433B32); // Lowish contrast black
+    } else {
+      // Normal: Cozy and Warm
+      background = isDark ? CozyColors.backgroundDark : CozyColors.background;
+      surface = isDark ? CozyColors.surfaceDark : CozyColors.surface;
+      primary = CozyColors.primary;
+      text = isDark ? CozyColors.textMainDark : CozyColors.textMain;
+    }
+
+    // 2. Determine Typography
+    TextTheme textTheme;
+    if (mode == LearningMode.dyslexia) {
+      // OpenDyslexic isn't in GoogleFonts efficiently, but Lexend or Comic Neue are good subs.
+      // User agreed to Lexend.
+      textTheme = GoogleFonts.lexendTextTheme();
+    } else if (mode == LearningMode.adhd) {
+      // Clean, sans-serif, no distraction.
+      textTheme = GoogleFonts.robotoTextTheme();
+    } else {
+      // Playful/Round
+      textTheme = GoogleFonts.outfitTextTheme();
+    }
+
+    // Apply colors to text theme
+    textTheme = textTheme.apply(bodyColor: text, displayColor: text);
+
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: CozyColors.background,
+      scaffoldBackgroundColor: background,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: CozyColors.primary,
-        background: CozyColors.background,
-        surface: CozyColors.surface,
-        brightness: Brightness.light,
+        seedColor: primary,
+        background: background,
+        surface: surface,
+        brightness: isDark ? Brightness.dark : Brightness.light,
         error: CozyColors.error,
       ),
-      textTheme: GoogleFonts.outfitTextTheme().apply(
-        bodyColor: CozyColors.textMain,
-        displayColor: CozyColors.textMain,
-      ),
+      textTheme: textTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: CozyColors.background,
+        backgroundColor: background,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.outfit(
-          color: CozyColors.textMain,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
+        titleTextStyle: textTheme.titleLarge?.copyWith(
+          color: text,
+          fontWeight: FontWeight.bold,
         ),
-        iconTheme: const IconThemeData(color: CozyColors.textMain),
-      ),
-
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: CozyColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          textStyle: GoogleFonts.outfit(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-
-  static ThemeData get dark {
-    return ThemeData(
-      useMaterial3: true,
-      scaffoldBackgroundColor: CozyColors.backgroundDark,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: CozyColors.primary, // Keep primary playful
-        background: CozyColors.backgroundDark,
-        surface: CozyColors.surfaceDark,
-        brightness: Brightness.dark,
-        error: CozyColors.error,
-      ),
-      textTheme: GoogleFonts.outfitTextTheme().apply(
-        bodyColor: CozyColors.textMainDark,
-        displayColor: CozyColors.textMainDark,
-      ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: CozyColors.backgroundDark,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: GoogleFonts.outfit(
-          color: CozyColors.textMainDark,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
-        iconTheme: const IconThemeData(color: CozyColors.textMainDark),
+        iconTheme: IconThemeData(color: text),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: CozyColors.primary,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
-          elevation: 0,
+          elevation: mode == LearningMode.adhd ? 0 : 2, // Flat for ADHD
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(
+              mode == LearningMode.dyslexia ? 8 : 16,
+            ), // Less round for dyslexia?
           ),
-          textStyle: GoogleFonts.outfit(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
       ),
     );

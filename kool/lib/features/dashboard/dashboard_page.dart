@@ -24,7 +24,9 @@ class DashboardPage extends ConsumerWidget {
     final streak = ref.watch(streakProvider);
 
     return Scaffold(
-      backgroundColor: CozyColors.background,
+      backgroundColor: Theme.of(
+        context,
+      ).scaffoldBackgroundColor, // Use theme background
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -50,131 +52,8 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  // ... (Header and Hero Card remain same)
-
-  Widget _buildExploreCourses(BuildContext context) {
-    final courses = [
-      {
-        'title': 'Ocean Life',
-        'color': CozyColors.secondary,
-        'icon': Icons.water_drop,
-      },
-      {'title': 'Dinosaurs', 'color': Colors.orange, 'icon': Icons.pets},
-      {
-        'title': 'Robotics',
-        'color': Colors.purple,
-        'icon': Icons.precision_manufacturing,
-      },
-      {'title': 'Art & Color', 'color': Colors.pink, 'icon': Icons.palette},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Explore Courses",
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: CozyColors.textMain,
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 160,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: courses.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
-            itemBuilder: (context, index) {
-              final course = courses[index];
-              return Container(
-                width: 140,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: (course['color'] as Color).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: (course['color'] as Color).withOpacity(0.3),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        course['icon'] as IconData,
-                        color: course['color'] as Color,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      course['title'] as String,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: CozyColors.textMain,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Start",
-                      style: TextStyle(
-                        color: (course['color'] as Color),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(delay: (800 + (index * 100)).ms).slideX();
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDailyTip(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: CozyColors.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: CozyColors.primary.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          const Text("💡", style: TextStyle(fontSize: 32)),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Did You Know?",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: CozyColors.primaryDark,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  "Octopuses have three hearts and blue blood!",
-                  style: TextStyle(color: CozyColors.textMain, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 1200.ms).scale();
-  }
+  // ... (Hero Card remains mostly same but check for text colors inside if needed)
+  // Skipping buildHeroLessonCard for now as it uses white text on Primary color which is fine in dark mode too.
 
   Widget _buildHeader(BuildContext context, LearningMode mode) {
     // Mascot selection based on mode/mood (Simple logic for now)
@@ -193,14 +72,14 @@ class DashboardPage extends ConsumerWidget {
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Outfit', // Ensure rounded font
-                color: CozyColors.textMain,
+                // Color comes from Theme.textTheme
               ),
             ),
             const SizedBox(height: 8),
             Text(
               "Ready to learn something new?",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: CozyColors.textSub,
+                // Color comes from Theme.textTheme
                 fontSize: 16,
               ),
             ),
@@ -341,6 +220,135 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
+  Widget _buildExploreCourses(BuildContext context) {
+    final courses = [
+      {
+        'title': 'Ocean Life',
+        'color': CozyColors.secondary,
+        'icon': Icons.water_drop,
+      },
+      {'title': 'Dinosaurs', 'color': Colors.orange, 'icon': Icons.pets},
+      {
+        'title': 'Robotics',
+        'color': Colors.purple,
+        'icon': Icons.precision_manufacturing,
+      },
+      {'title': 'Art & Color', 'color': Colors.pink, 'icon': Icons.palette},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Explore Courses",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            // Color handled by Theme
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 160,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: courses.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final course = courses[index];
+              return Container(
+                width: 140,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: (course['color'] as Color).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: (course['color'] as Color).withOpacity(0.3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).cardColor, // Adaptive card color
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        course['icon'] as IconData,
+                        color: course['color'] as Color,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      course['title'] as String,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Start",
+                      style: TextStyle(
+                        color: (course['color'] as Color),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(delay: (800 + (index * 100)).ms).slideX();
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDailyTip(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: CozyColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: CozyColors.primary.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Text("💡", style: TextStyle(fontSize: 32)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Did You Know?",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Octopuses have three hearts and blue blood!",
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 1200.ms).scale();
+  }
+
+  // Header was updated previously
+
+  // ... (Header already updated in previous step) - Wait, replace_file needs exact context.
+  // I need to be careful with StartLine/EndLine. I'll rely on TargetContent.
+
   Widget _buildStatCard(
     BuildContext context,
     String title,
@@ -352,7 +360,7 @@ class DashboardPage extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor, // Adaptive card color
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: color.withOpacity(0.2), width: 2),
       ),
@@ -362,18 +370,16 @@ class DashboardPage extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 24,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
-              color: CozyColors.textMain,
+              // Color adaptive
             ),
           ),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 14,
-              color: CozyColors.textSub,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w500,
+              // Color adaptive
             ),
           ),
         ],
@@ -389,7 +395,7 @@ class DashboardPage extends ConsumerWidget {
           "Quick Actions",
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            color: CozyColors.textMain,
+            // Color handled by Theme
           ),
         ),
         const SizedBox(height: 16),
@@ -450,10 +456,9 @@ class DashboardPage extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: CozyColors.textMain,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),

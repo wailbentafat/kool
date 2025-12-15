@@ -115,6 +115,33 @@ class ProfilePage extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Appearance Settings
+          const Text(
+            "Appearance",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: CozyColors.textSub,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: SwitchListTile(
+              title: const Text("Sleepy Mode 🌙"),
+              subtitle: const Text("Dark theme for night-time learning"),
+              value: ref.watch(themeModeProvider) == ThemeMode.dark,
+              activeThumbColor: CozyColors.accent,
+              onChanged: (isDark) {
+                final newMode = isDark ? ThemeMode.dark : ThemeMode.light;
+                ref.read(themeModeProvider.notifier).state = newMode;
+                ref.read(userPreferencesServiceProvider).setThemeMode(newMode);
+              },
+            ),
+          ),
 
           const SizedBox(height: 24),
           const Text(
@@ -125,17 +152,22 @@ class ProfilePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          SwitchListTile(
-            value: consent,
-            title: const Text("Allow Local Usage Analysis"),
-            subtitle: const Text(
-              "Helps adapt the app to your needs. No data leaves device.",
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            activeThumbColor: CozyColors.success,
-            onChanged: (val) {
-              ref.read(userConsentProvider.notifier).state = val;
-              ref.read(userPreferencesServiceProvider).setUserConsent(val);
-            },
+            child: SwitchListTile(
+              value: consent,
+              title: const Text("Allow Local Usage Analysis"),
+              subtitle: const Text(
+                "Helps adapt the app to your needs. No data leaves device.",
+              ),
+              activeColor: CozyColors.success,
+              onChanged: (val) {
+                ref.read(userConsentProvider.notifier).state = val;
+                ref.read(userPreferencesServiceProvider).setUserConsent(val);
+              },
+            ),
           ),
         ],
       ),

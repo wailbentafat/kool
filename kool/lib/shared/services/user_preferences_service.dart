@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/mode_detection/models/learning_mode.dart';
@@ -26,6 +27,16 @@ class UserPreferencesService {
 
   Future<void> setLearningMode(LearningMode mode) =>
       _prefs.setInt(_keyMode, mode.index);
+
+  static const _keyTheme = 'theme_mode'; // 0: System, 1: Light, 2: Dark
+
+  ThemeMode get themeMode {
+    final index = _prefs.getInt(_keyTheme) ?? 0;
+    return ThemeMode.values[index];
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) =>
+      _prefs.setInt(_keyTheme, mode.index);
 }
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {

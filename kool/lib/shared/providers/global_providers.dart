@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/user_preferences_service.dart';
 import '../../features/mode_detection/models/learning_mode.dart';
@@ -13,6 +14,10 @@ final userConsentProvider = StateProvider<bool>((ref) {
 
 final learningModeProvider = StateProvider<LearningMode>((ref) {
   return ref.watch(userPreferencesServiceProvider).learningMode;
+});
+
+final themeModeProvider = StateProvider<ThemeMode>((ref) {
+  return ref.watch(userPreferencesServiceProvider).themeMode;
 });
 
 /// Example provider for theme mode if we add dark mode later.

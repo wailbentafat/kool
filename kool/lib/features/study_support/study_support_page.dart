@@ -47,9 +47,11 @@ class _StudySupportPageState extends State<StudySupportPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            Text(
               "Paste text below to get a simplified summary.",
-              style: TextStyle(color: CozyColors.textSub, fontSize: 16),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -58,7 +60,7 @@ class _StudySupportPageState extends State<StudySupportPage> {
               decoration: InputDecoration(
                 hintText: "Paste your study notes here...",
                 filled: true,
-                fillColor: CozyColors.cardBg,
+                fillColor: Theme.of(context).cardColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -90,10 +92,10 @@ class _StudySupportPageState extends State<StudySupportPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: CozyColors.surface,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: CozyColors.primary.withOpacity(0.3),
+                    color: CozyColors.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Text(

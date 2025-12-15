@@ -121,7 +121,7 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
                     decoration: BoxDecoration(
                       color: isFlipped
                           ? CozyColors.primary
-                          : CozyColors.textSub.withOpacity(0.1),
+                          : Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -130,7 +130,10 @@ class _MemoryGamePageState extends State<MemoryGamePage> {
                               _cards[index],
                               style: const TextStyle(fontSize: 32),
                             )
-                          : const Icon(Icons.help_outline, color: Colors.grey),
+                          : Icon(
+                              Icons.help_outline,
+                              color: Theme.of(context).disabledColor,
+                            ),
                     ),
                   ),
                 );

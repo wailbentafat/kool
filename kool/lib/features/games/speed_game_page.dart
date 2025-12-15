@@ -144,17 +144,15 @@ class _SpeedGamePageState extends State<SpeedGamePage> {
             if (_isPlaying) ...[
               Text(
                 "Time: $_timeLeft",
-                style: const TextStyle(
-                  fontSize: 24,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: CozyColors.textSub,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
                 "Score: $_score",
-                style: const TextStyle(
-                  fontSize: 24,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: CozyColors.primary,
                 ),
@@ -168,12 +166,12 @@ class _SpeedGamePageState extends State<SpeedGamePage> {
                 width: 300,
                 height: 300,
                 decoration: BoxDecoration(
-                  color: CozyColors.cardBg,
+                  color: Theme.of(context).cardColor,
                   shape: BoxShape.circle,
                   border: Border.all(color: CozyColors.primary, width: 4),
                   boxShadow: [
                     BoxShadow(
-                      color: CozyColors.primary.withOpacity(0.2),
+                      color: CozyColors.primary.withValues(alpha: 0.2),
                       blurRadius: 20,
                       spreadRadius: 5,
                     ),
@@ -185,7 +183,8 @@ class _SpeedGamePageState extends State<SpeedGamePage> {
                     style: GoogleFonts.outfit(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
-                      color: CozyColors.textMain,
+                      // Color handled by Theme default or strict override if needed
+                      color: Theme.of(context).textTheme.displaySmall?.color,
                     ),
                   ),
                 ),
@@ -205,11 +204,13 @@ class _SpeedGamePageState extends State<SpeedGamePage> {
                 child: const Text("Start Game"),
               ),
             ] else
-              const Padding(
-                padding: EdgeInsets.only(top: 48),
+              Padding(
+                padding: const EdgeInsets.only(top: 48),
                 child: Text(
                   "Tap the word to collect points!",
-                  style: TextStyle(color: CozyColors.textSub),
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
                 ),
               ),
           ],

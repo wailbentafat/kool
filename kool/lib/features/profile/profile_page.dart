@@ -56,11 +56,13 @@ class ProfilePage extends ConsumerWidget {
           const SizedBox(height: 32),
 
           // Learning Mode Settings
-          const Text(
+          Text(
             "Learning Mode",
-            style: TextStyle(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: CozyColors.textSub,
+              color: Theme.of(
+                context,
+              ).textTheme.bodySmall?.color, // Subtitle color
             ),
           ),
           const SizedBox(height: 8),
@@ -118,11 +120,11 @@ class ProfilePage extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Appearance Settings
-          const Text(
+          Text(
             "Appearance",
-            style: TextStyle(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: CozyColors.textSub,
+              color: Theme.of(context).textTheme.bodySmall?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -144,11 +146,11 @@ class ProfilePage extends ConsumerWidget {
           ),
 
           const SizedBox(height: 24),
-          const Text(
+          Text(
             "Privacy",
-            style: TextStyle(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: CozyColors.textSub,
+              color: Theme.of(context).textTheme.bodySmall?.color,
             ),
           ),
           const SizedBox(height: 8),

@@ -38,12 +38,142 @@ class DashboardPage extends ConsumerWidget {
               _buildStatsRow(context, focusLevel, streak),
               const SizedBox(height: 24),
               _buildQuickActionsGrid(context),
+              const SizedBox(height: 32),
+              _buildExploreCourses(context),
+              const SizedBox(height: 32),
+              _buildDailyTip(context),
               const SizedBox(height: 100), // Bottom padding
             ],
           ),
         ),
       ),
     );
+  }
+
+  // ... (Header and Hero Card remain same)
+
+  Widget _buildExploreCourses(BuildContext context) {
+    final courses = [
+      {
+        'title': 'Ocean Life',
+        'color': CozyColors.secondary,
+        'icon': Icons.water_drop,
+      },
+      {'title': 'Dinosaurs', 'color': Colors.orange, 'icon': Icons.pets},
+      {
+        'title': 'Robotics',
+        'color': Colors.purple,
+        'icon': Icons.precision_manufacturing,
+      },
+      {'title': 'Art & Color', 'color': Colors.pink, 'icon': Icons.palette},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Explore Courses",
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: CozyColors.textMain,
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 160,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: courses.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final course = courses[index];
+              return Container(
+                width: 140,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: (course['color'] as Color).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: (course['color'] as Color).withOpacity(0.3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        course['icon'] as IconData,
+                        color: course['color'] as Color,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      course['title'] as String,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: CozyColors.textMain,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Start",
+                      style: TextStyle(
+                        color: (course['color'] as Color),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(delay: (800 + (index * 100)).ms).slideX();
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDailyTip(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: CozyColors.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: CozyColors.primary.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Text("💡", style: TextStyle(fontSize: 32)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Did You Know?",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: CozyColors.primaryDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  "Octopuses have three hearts and blue blood!",
+                  style: TextStyle(color: CozyColors.textMain, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 1200.ms).scale();
   }
 
   Widget _buildHeader(BuildContext context, LearningMode mode) {

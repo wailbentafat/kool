@@ -113,7 +113,7 @@ class DashboardPage extends ConsumerWidget {
         const SizedBox(height: 16),
         GestureDetector(
           onTap: () {
-            context.push('/learning-session');
+            context.push('/lessons');
           },
           child: Container(
             padding: const EdgeInsets.all(20),

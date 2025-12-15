@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/theme/cozy_theme.dart';
 import '../../shared/providers/global_providers.dart';
 import '../../shared/services/mock_ai_service.dart';
+
 import 'models/learning_mode.dart';
 
 class ModeDetectionPage extends ConsumerStatefulWidget {
@@ -15,7 +16,6 @@ class ModeDetectionPage extends ConsumerStatefulWidget {
 }
 
 class _ModeDetectionPageState extends ConsumerState<ModeDetectionPage> {
-  // Metric trackers
   int _wordsRead = 0;
   int _errors = 0;
   int _hesitations = 0;
@@ -48,7 +48,7 @@ class _ModeDetectionPageState extends ConsumerState<ModeDetectionPage> {
 
     if (!mounted) return;
 
-    // Save mode
+    // Save mode to provider
     ref.read(learningModeProvider.notifier).state = mode;
 
     // Show result dialog then go to dashboard

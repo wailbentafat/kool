@@ -1,17 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/user_preferences_service.dart';
 import '../../features/mode_detection/models/learning_mode.dart';
 
-/// Tracks if the user has completed the onboarding flow.
-final onboardingCompletedProvider = StateProvider<bool>((ref) => false);
+// User Preferences with Persistence
+final onboardingCompletedProvider = StateProvider<bool>((ref) {
+  return ref.watch(userPreferencesServiceProvider).onboardingCompleted;
+});
 
-/// Tracks if the user has consented to local data collection.
-final userConsentProvider = StateProvider<bool>((ref) => false);
+final userConsentProvider = StateProvider<bool>((ref) {
+  return ref.watch(userPreferencesServiceProvider).userConsent;
+});
 
-/// The current learning mode of the application.
-/// Defaults to [LearningMode.normal] until detected or changed.
-final learningModeProvider = StateProvider<LearningMode>(
-  (ref) => LearningMode.normal,
-);
+final learningModeProvider = StateProvider<LearningMode>((ref) {
+  return ref.watch(userPreferencesServiceProvider).learningMode;
+});
 
 /// Example provider for theme mode if we add dark mode later.
 /// Currently simpler to stick to one cozy theme or system default.

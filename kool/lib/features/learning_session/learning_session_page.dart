@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../app/theme/cozy_theme.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import '../../shared/providers/global_providers.dart';
 import '../mode_detection/models/learning_mode.dart';
 
@@ -14,8 +16,18 @@ final sessionWordSpacingProvider = StateProvider.autoDispose<double>(
   (ref) => 1.0,
 );
 
+// ... (providers remain)
+
 class LearningSessionPage extends ConsumerStatefulWidget {
-  const LearningSessionPage({super.key});
+  final String title;
+  final String content;
+
+  const LearningSessionPage({
+    super.key,
+    this.title = "The Solar System",
+    this.content =
+        "The Solar System is our home in the galaxy. It consists of the Sun and everything that orbits around it. This includes eight planets and their moons, as well as dwarf planets, asteroids, and comets.\n\nThe Sun is a star. It is a huge ball of hot gas that gives off light and heat. It is by far the most important object in the Solar System, as it contains 99.8% of the Solar System's mass.\n\nThe four inner planets are Mercury, Venus, Earth, and Mars. They are called terrestrial planets because they are made mostly of rock and metal. Earth is the only planet known to support life, thanks to its liquid water and breathable atmosphere.\n\nThe four outer planets are Jupiter, Saturn, Uranus, and Neptune. These are often called gas giants. Jupiter is the largest planet in the Solar System. Saturn is famous for its beautiful rings.\n\nBeyond Neptune lies the Kuiper Belt, a region filled with icy bodies. This is where the dwarf planet Pluto resides. Exploring space helps us understand where we imply came from and if we are alone in the universe.",
+  });
 
   @override
   ConsumerState<LearningSessionPage> createState() =>
@@ -25,6 +37,9 @@ class LearningSessionPage extends ConsumerStatefulWidget {
 class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
   final ScrollController _scrollController = ScrollController();
   final Stopwatch _sessionTimer = Stopwatch();
+  final FlutterTts _flutterTts = FlutterTts();
+
+  bool _isPlaying = false;
 
   // Tracking
   int _pauseCount = 0;
@@ -36,6 +51,8 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     _sessionTimer.start();
     _lastScrollTime = DateTime.now();
     _scrollController.addListener(_onScroll);
+
+    _initTts();
 
     // Initial setup based on global mode
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -94,10 +111,33 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     }
   }
 
+  void _initTts() async {
+    await _flutterTts.setLanguage("en-US");
+    await _flutterTts.setSpeechRate(0.5); // Slower for learning
+    await _flutterTts.setPitch(1.0);
+
+    _flutterTts.setCompletionHandler(() {
+      if (mounted) setState(() => _isPlaying = false);
+    });
+  }
+
+  void _toggleAudio() async {
+    if (_isPlaying) {
+      await _flutterTts.stop();
+      if (mounted) setState(() => _isPlaying = false);
+    } else {
+      if (mounted) setState(() => _isPlaying = true);
+      await _flutterTts.speak(widget.content);
+    }
+  }
+
+  // ... (existing tracking methods)
+
   @override
   void dispose() {
     _scrollController.dispose();
     _sessionTimer.stop();
+    _flutterTts.stop();
     super.dispose();
   }
 
@@ -111,8 +151,17 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     return Scaffold(
       backgroundColor: CozyColors.background,
       appBar: AppBar(
-        title: const Text("The Solar System"),
+        title: Text(widget.title),
         actions: [
+          IconButton(
+            icon: Icon(
+              _isPlaying
+                  ? Icons.pause_circle_filled_rounded
+                  : Icons.volume_up_rounded,
+            ),
+            color: _isPlaying ? CozyColors.primary : CozyColors.textMain,
+            onPressed: _toggleAudio,
+          ),
           IconButton(
             icon: const Icon(Icons.text_fields_rounded),
             onPressed: () => _showformattingSettings(context),
@@ -127,7 +176,7 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
           children: [
             // Title
             Text(
-              "Our Neighborhood in Space",
+              widget.title,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: CozyColors.textMain,
@@ -136,11 +185,7 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
             const SizedBox(height: 24),
             // Content
             Text(
-              "The Solar System is our home in the galaxy. It consists of the Sun and everything that orbits around it. This includes eight planets and their moons, as well as dwarf planets, asteroids, and comets.\n\n"
-              "The Sun is a star. It is a huge ball of hot gas that gives off light and heat. It is by far the most important object in the Solar System, as it contains 99.8% of the Solar System's mass.\n\n"
-              "The four inner planets are Mercury, Venus, Earth, and Mars. They are called terrestrial planets because they are made mostly of rock and metal. Earth is the only planet known to support life, thanks to its liquid water and breathable atmosphere.\n\n"
-              "The four outer planets are Jupiter, Saturn, Uranus, and Neptune. These are often called gas giants. Jupiter is the largest planet in the Solar System. Saturn is famous for its beautiful rings.\n\n"
-              "Beyond Neptune lies the Kuiper Belt, a region filled with icy bodies. This is where the dwarf planet Pluto resides. Exploring space helps us understand where we imply came from and if we are alone in the universe.",
+              widget.content,
               style: GoogleFonts.outfit(
                 fontSize: fontSize,
                 height: height,

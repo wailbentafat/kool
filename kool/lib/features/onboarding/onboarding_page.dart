@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import '../../shared/services/user_preferences_service.dart';
 import '../../app/theme/cozy_theme.dart';
 import '../../shared/providers/global_providers.dart';
 
@@ -80,9 +81,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           ElevatedButton(
             onPressed: () {
               if (isLastPage) {
-                // Complete Onboarding
                 ref.read(onboardingCompletedProvider.notifier).state = true;
-                context.go('/mode-detection');
+                ref
+                    .read(userPreferencesServiceProvider)
+                    .setOnboardingCompleted(true);
+                if (context.mounted) context.go('/dashboard');
               } else {
                 _pageController.nextPage(
                   duration: const Duration(milliseconds: 500),
@@ -181,6 +184,7 @@ class _ConsentContent extends ConsumerWidget {
             value: consentGiven,
             onChanged: (val) {
               ref.read(userConsentProvider.notifier).state = val;
+              ref.read(userPreferencesServiceProvider).setUserConsent(val);
             },
             title: Text(
               'I understand and consent',

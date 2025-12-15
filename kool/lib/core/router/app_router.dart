@@ -4,6 +4,7 @@ import '../../features/onboarding/onboarding_page.dart';
 import '../../features/mode_detection/mode_detection_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
 import '../../features/learning_session/learning_session_page.dart';
+import '../../features/lessons/lesson_hub_page.dart';
 import '../../features/games/games_page.dart';
 import '../../features/games/memory_game_page.dart';
 import '../../features/games/speed_game_page.dart';
@@ -23,8 +24,18 @@ final appRouter = GoRouter(
       builder: (context, state) => const DashboardPage(),
     ),
     GoRoute(
+      path: '/lessons',
+      builder: (context, state) => const LessonHubPage(),
+    ),
+    GoRoute(
       path: '/learning-session',
-      builder: (context, state) => const LearningSessionPage(),
+      builder: (context, state) {
+        final extras = state.extra as Map<String, dynamic>?;
+        return LearningSessionPage(
+          title: extras?['title'] ?? "The Solar System",
+          content: extras?['content'] ?? "Standard lesson content...",
+        );
+      },
     ),
     GoRoute(
       path: '/games',

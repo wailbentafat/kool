@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/theme/cozy_theme.dart';
+import '../../shared/services/user_preferences_service.dart';
 import '../../shared/providers/global_providers.dart';
 import '../mode_detection/models/learning_mode.dart';
 
@@ -65,6 +66,9 @@ class ProfilePage extends ConsumerWidget {
                   onChanged: (val) {
                     if (val != null) {
                       ref.read(learningModeProvider.notifier).state = val;
+                      ref
+                          .read(userPreferencesServiceProvider)
+                          .setLearningMode(val);
                     }
                   },
                 ),
@@ -76,6 +80,9 @@ class ProfilePage extends ConsumerWidget {
                   onChanged: (val) {
                     if (val != null) {
                       ref.read(learningModeProvider.notifier).state = val;
+                      ref
+                          .read(userPreferencesServiceProvider)
+                          .setLearningMode(val);
                     }
                   },
                 ),
@@ -87,6 +94,9 @@ class ProfilePage extends ConsumerWidget {
                   onChanged: (val) {
                     if (val != null) {
                       ref.read(learningModeProvider.notifier).state = val;
+                      ref
+                          .read(userPreferencesServiceProvider)
+                          .setLearningMode(val);
                     }
                   },
                 ),
@@ -112,6 +122,7 @@ class ProfilePage extends ConsumerWidget {
             activeThumbColor: CozyColors.success,
             onChanged: (val) {
               ref.read(userConsentProvider.notifier).state = val;
+              ref.read(userPreferencesServiceProvider).setUserConsent(val);
             },
           ),
         ],

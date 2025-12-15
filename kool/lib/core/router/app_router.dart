@@ -1,8 +1,8 @@
 import 'package:go_router/go_router.dart';
+import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/onboarding/splash_page.dart';
 import '../../features/onboarding/onboarding_page.dart';
 import '../../features/mode_detection/mode_detection_page.dart';
-import '../../features/dashboard/dashboard_page.dart';
 import '../../features/learning_session/learning_session_page.dart';
 
 import '../../features/games/games_page.dart';
@@ -11,6 +11,8 @@ import '../../features/games/speed_game_page.dart';
 import '../../features/games/pattern_game_page.dart';
 import '../../features/study_support/study_support_page.dart';
 import '../../features/profile/profile_page.dart';
+import '../../features/ai_roleplay/presentation/pages/roleplay_landing_page.dart';
+import '../../features/ai_roleplay/presentation/pages/roleplay_chat_page.dart';
 import '../../features/profile/mistake_summary_page.dart';
 
 final appRouter = GoRouter(
@@ -65,6 +67,16 @@ final appRouter = GoRouter(
       path: '/study-support',
       builder: (context, state) => const StudySupportPage(),
     ),
-    GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
+    GoRoute(
+      path: '/roleplay',
+      builder: (context, state) => const RoleplayLandingPage(),
+    ),
+    GoRoute(
+      path: '/roleplay-chat/:charId',
+      builder: (context, state) {
+        final charId = state.pathParameters['charId']!;
+        return RoleplayChatPage(characterId: charId);
+      },
+    ),
   ],
 );

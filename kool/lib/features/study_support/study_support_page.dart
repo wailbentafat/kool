@@ -21,21 +21,41 @@ class _StudySupportPageState extends State<StudySupportPage> {
       _summary = "";
     });
 
-    // Mock processing
-    await Future.delayed(const Duration(seconds: 2));
+    // 1. Simulate "Thinking" phase
+    await Future.delayed(const Duration(seconds: 1));
 
-    setState(() {
-      _isProcessing = false;
-      // Rule-based "summary": Take first sentence and add generic tips.
-      final text = _textController.text;
-      final sentences = text.split(RegExp(r'[.!?]'));
-      final firstSentence = sentences.isNotEmpty ? sentences.first : text;
+    // 2. Prepare the target text (Simulated AI response)
+    final text = _textController.text;
+    final sentences = text.split(RegExp(r'[.!?]'));
+    final topic = sentences.isNotEmpty ? sentences.first : "this topic";
 
-      _summary =
-          "Here is the key point:\n\n"
-          "• \"$firstSentence.\"\n\n"
-          "Tip: Try to break down the rest into bullet points!";
-    });
+    final response =
+        """
+Here is a simple summary for you! 🌟
+
+• Key Point: "${topic.trim()}."
+• Why it matters: It helps us understand the world better.
+
+💡 Quick Tip: Try drawing a picture of this to remember it better!
+""";
+
+    // 3. Stream the text character by character
+    setState(() => _isProcessing = false); // Stop spinner, start typing
+
+    for (int i = 0; i < response.length; i++) {
+      if (!mounted) return;
+
+      setState(() {
+        _summary += response[i];
+      });
+
+      // Variable speed for realism (faster on spaces, slower on punctuation)
+      int delay = 30;
+      if (response[i] == '.' || response[i] == '!') delay = 100;
+      if (response[i] == ' ') delay = 10;
+
+      await Future.delayed(Duration(milliseconds: delay));
+    }
   }
 
   @override

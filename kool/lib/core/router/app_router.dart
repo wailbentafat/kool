@@ -31,12 +31,14 @@ final appRouter = GoRouter(
       builder: (context, state) => const MistakeSummaryPage(),
     ),
     GoRoute(
-      path: '/learning-session',
+      path: '/learning-session/:id',
       builder: (context, state) {
+        final id = state.pathParameters['id'];
         final extras = state.extra as Map<String, dynamic>?;
         return LearningSessionPage(
-          title: extras?['title'] ?? "The Solar System",
-          content: extras?['content'] ?? "Standard lesson content...",
+          lessonId: id,
+          title: extras?['title'], // Optional fallback
+          content: extras?['content'], // Optional fallback
         );
       },
     ),

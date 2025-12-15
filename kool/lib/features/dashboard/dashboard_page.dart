@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../app/theme/cozy_theme.dart';
 import '../../shared/providers/global_providers.dart';
 import '../mode_detection/models/learning_mode.dart';
@@ -23,19 +24,21 @@ class DashboardPage extends ConsumerWidget {
     final streak = ref.watch(streakProvider);
 
     return Scaffold(
+      backgroundColor: CozyColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildHeader(context, mode),
               const SizedBox(height: 32),
-              _buildContinueLearning(context),
+              _buildHeroLessonCard(context),
               const SizedBox(height: 24),
-              _buildFocusLevel(context, focusLevel, streak),
+              _buildStatsRow(context, focusLevel, streak),
               const SizedBox(height: 24),
-              _buildQuickActions(context),
+              _buildQuickActionsGrid(context),
+              const SizedBox(height: 100), // Bottom padding
             ],
           ),
         ),
@@ -44,23 +47,10 @@ class DashboardPage extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, LearningMode mode) {
-    String modeText;
-    Color modeColor;
-
-    switch (mode) {
-      case LearningMode.adhd:
-        modeText = "Focus Mode";
-        modeColor = CozyColors.primary;
-        break;
-      case LearningMode.dyslexia:
-        modeText = "Dyslexia Support";
-        modeColor = CozyColors.secondary;
-        break;
-      case LearningMode.normal:
-        modeText = "Standard Mode";
-        modeColor = CozyColors.textSub;
-        break;
-    }
+    // Mascot selection based on mode/mood (Simple logic for now)
+    String mascot = "🦁"; // Default Lion
+    if (mode == LearningMode.adhd) mascot = "🐯"; // Tiger for Focus
+    if (mode == LearningMode.dyslexia) mascot = "🦉"; // Owl for Wisdom
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -69,188 +59,236 @@ class DashboardPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Good Morning,",
+              "Good Morning, Alex! ☀️",
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
+                fontFamily: 'Outfit', // Ensure rounded font
                 color: CozyColors.textMain,
               ),
             ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: modeColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  modeText,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: CozyColors.textSub,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            Text(
+              "Ready to learn something new?",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: CozyColors.textSub,
+                fontSize: 16,
+              ),
             ),
           ],
         ),
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: CozyColors.primary.withOpacity(0.2),
-          child: const Icon(
-            Icons.person_rounded,
-            color: CozyColors.primaryDark,
-          ),
-        ),
+        Text(mascot, style: const TextStyle(fontSize: 48))
+            .animate(onPlay: (controller) => controller.repeat(reverse: true))
+            .scale(
+              duration: 1.seconds,
+              begin: const Offset(1, 1),
+              end: const Offset(1.1, 1.1),
+            ),
       ],
-    );
+    ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2, end: 0);
   }
 
-  Widget _buildContinueLearning(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Continue Learning",
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onTap: () {
-            context.push('/lessons');
-          },
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: CozyColors.primary,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: CozyColors.primary.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+  Widget _buildHeroLessonCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/learning-session/solar-system-1'),
+      child: Container(
+        height: 180,
+        decoration: BoxDecoration(
+          color: CozyColors.primary,
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: CozyColors.primary.withOpacity(0.4),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Background Decoration
+            Positioned(
+              right: -20,
+              top: -20,
+              child: Icon(
+                Icons.public,
+                size: 200,
+                color: Colors.white.withOpacity(0.1),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      "CONTINUE LEARNING",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
-                  child: const Icon(Icons.book_rounded, color: Colors.white),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 12),
+                  const Text(
+                    "The Solar System",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
                     children: [
+                      const Icon(Icons.timer, color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
                       const Text(
-                        "The Solar System",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        "5 min left",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "5 min left • Science",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 14,
-                        ),
-                      ),
+                      const Spacer(),
+                      Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.play_arrow_rounded,
+                              color: CozyColors.primary,
+                              size: 32,
+                            ),
+                          )
+                          .animate(onPlay: (controller) => controller.repeat())
+                          .shimmer(delay: 2000.ms, duration: 1000.ms),
                     ],
                   ),
-                ),
-                const Icon(
-                  Icons.play_circle_fill_rounded,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ],
+                ],
+              ),
             ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 200.ms).slideX(begin: 0.2, end: 0);
+  }
+
+  Widget _buildStatsRow(BuildContext context, int focus, int streak) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            context,
+            "Focus Level",
+            "$focus%",
+            "⚡",
+            CozyColors.accent,
+            delay: 400.ms,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildStatCard(
+            context,
+            "Day Streak",
+            "$streak",
+            "🔥",
+            CozyColors.warning,
+            delay: 500.ms,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildFocusLevel(BuildContext context, int focus, int streak) {
+  Widget _buildStatCard(
+    BuildContext context,
+    String title,
+    String value,
+    String emoji,
+    Color color, {
+    required Duration delay,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: CozyColors.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: color.withOpacity(0.2), width: 2),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Icon(Icons.bolt_rounded, color: CozyColors.accent, size: 32),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Focus Level: $focus%",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  "On a $streak day streak! Keep it up!",
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: CozyColors.textSub),
-                ),
-              ],
+          Text(emoji, style: const TextStyle(fontSize: 32)),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: CozyColors.textMain,
+            ),
+          ),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              color: CozyColors.textSub,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(delay: delay).scale();
   }
 
-  Widget _buildQuickActions(BuildContext context) {
+  Widget _buildQuickActionsGrid(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           "Quick Actions",
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: CozyColors.textMain,
+          ),
         ),
         const SizedBox(height: 16),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildActionButton(
+            _buildRoundActionButton(
               context,
               icon: Icons.games_rounded,
               label: "Games",
+              color: CozyColors.secondary,
               onTap: () => context.push('/games'),
+              delay: 600.ms,
             ),
-            _buildActionButton(
+            _buildRoundActionButton(
               context,
-              icon: Icons.note_alt_rounded,
+              icon: Icons.auto_awesome_rounded,
               label: "Summarize",
+              color: CozyColors.primary,
               onTap: () => context.push('/study-support'),
+              delay: 700.ms,
             ),
-            _buildActionButton(
+            _buildRoundActionButton(
               context,
-              icon: Icons.settings_rounded,
-              label: "Settings",
+              icon: Icons.person_rounded,
+              label: "Profile",
+              color: CozyColors.accent,
               onTap: () => context.push('/profile'),
+              delay: 800.ms,
             ),
           ],
         ),
@@ -258,35 +296,37 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButton(
+  Widget _buildRoundActionButton(
     BuildContext context, {
     required IconData icon,
     required String label,
+    required Color color,
     required VoidCallback onTap,
+    required Duration delay,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            width: 70,
+            height: 70,
             decoration: BoxDecoration(
-              color: CozyColors.cardBg,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.black.withOpacity(0.05)),
+              color: color.withOpacity(0.15),
+              shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: CozyColors.secondaryDark, size: 28),
+            child: Icon(icon, color: color, size: 32),
           ),
           const SizedBox(height: 8),
           Text(
             label,
             style: const TextStyle(
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.bold,
               color: CozyColors.textMain,
             ),
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(delay: delay).moveY(begin: 20, end: 0);
   }
 }

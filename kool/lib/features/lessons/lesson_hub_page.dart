@@ -22,7 +22,7 @@ class LessonHubPage extends ConsumerWidget {
             isLocked: false,
             onTap: () {
               context.push(
-                '/learning-session',
+                '/learning-session/solar-system-1',
                 extra: {
                   'title': "The Solar System",
                   'content':

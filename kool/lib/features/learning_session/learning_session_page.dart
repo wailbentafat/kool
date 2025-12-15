@@ -20,14 +20,15 @@ final sessionWordSpacingProvider = StateProvider.autoDispose<double>(
 // ... (providers remain)
 
 class LearningSessionPage extends ConsumerStatefulWidget {
-  final String title;
-  final String content;
+  final String? lessonId;
+  final String? title;
+  final String? content;
 
   const LearningSessionPage({
     super.key,
-    this.title = "The Solar System",
-    this.content =
-        "The Solar System is our home in the galaxy. It consists of the Sun and everything that orbits around it. This includes eight planets and their moons, as well as dwarf planets, asteroids, and comets.\n\nThe Sun is a star. It is a huge ball of hot gas that gives off light and heat. It is by far the most important object in the Solar System, as it contains 99.8% of the Solar System's mass.\n\nThe four inner planets are Mercury, Venus, Earth, and Mars. They are called terrestrial planets because they are made mostly of rock and metal. Earth is the only planet known to support life, thanks to its liquid water and breathable atmosphere.\n\nThe four outer planets are Jupiter, Saturn, Uranus, and Neptune. These are often called gas giants. Jupiter is the largest planet in the Solar System. Saturn is famous for its beautiful rings.\n\nBeyond Neptune lies the Kuiper Belt, a region filled with icy bodies. This is where the dwarf planet Pluto resides. Exploring space helps us understand where we imply came from and if we are alone in the universe.",
+    this.lessonId,
+    this.title,
+    this.content,
   });
 
   @override
@@ -42,6 +43,11 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
 
   bool _isPlaying = false;
 
+  // Content State
+  late String _sessionTitle;
+  late String _sessionContent;
+  bool _isLoading = true;
+
   // Tracking
   int _pauseCount = 0;
   DateTime? _lastScrollTime;
@@ -55,6 +61,20 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
   @override
   void initState() {
     super.initState();
+
+    // Initialize content
+    if (widget.title != null && widget.content != null) {
+      _sessionTitle = widget.title!;
+      _sessionContent = widget.content!;
+      _isLoading = false;
+    } else {
+      // Fallback: If no extra, load mock data or fetch by ID (Mock for now)
+      _sessionTitle = "The Solar System (Fallback)";
+      _sessionContent =
+          "The Solar System is our home in the galaxy..."; // Truncated for brevity
+      _isLoading = false;
+    }
+
     _sessionTimer.start();
     _lastScrollTime = DateTime.now();
     _scrollController.addListener(_onScroll);
@@ -150,7 +170,7 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
       if (mounted) setState(() => _isPlaying = false);
     } else {
       if (mounted) setState(() => _isPlaying = true);
-      await _flutterTts.speak(widget.content);
+      await _flutterTts.speak(_sessionContent);
     }
   }
 
@@ -244,7 +264,7 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
     return Scaffold(
       backgroundColor: CozyColors.background,
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(_sessionTitle),
         actions: [
           if (!_isQuizMode) ...[
             IconButton(
@@ -270,6 +290,10 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
   }
 
   Widget _buildContentUI(double fontSize, double height, double wordSpacing) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       controller: _scrollController,
       padding: const EdgeInsets.all(24.0),
@@ -278,7 +302,7 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
         children: [
           // Title
           Text(
-            widget.title,
+            _sessionTitle,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: CozyColors.textMain,
@@ -287,7 +311,7 @@ class _LearningSessionPageState extends ConsumerState<LearningSessionPage> {
           const SizedBox(height: 24),
           // Content
           Text(
-            widget.content,
+            _sessionContent,
             style: GoogleFonts.outfit(
               fontSize: fontSize,
               height: height,
